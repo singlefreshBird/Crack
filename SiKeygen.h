@@ -20,6 +20,8 @@ using unique_handle_t = std::unique_ptr<HANDLE, deleter>;
 class SiKeygen
 {
 private:
+    // 创建多层级目录
+    auto makeDirectory(const std::string& path)->bool;
     auto genNocontinuousNumber()->std::string;
     auto transform(const std::string& str)->std::string;
     auto randomChoice(const char* table, int count)->std::string;
@@ -37,5 +39,6 @@ private:
     auto getSystemDiskSerial()->std::string;
 public:
     auto genLicenseFile(const std::string& name, const std::string& company, const std::string& email)->bool;
+    auto importLicenseFile()->bool;
 };
 

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include "CCBase64.h"
+#include <vector>
 
 const BYTE enc_tbl[] = { 
     0x32, 0xDF, 0x71, 0xB7, 0x61, 0x3D, 0x6B, 0x57, 0xD7, 0xA1,
@@ -240,6 +241,32 @@ auto SiKeygen::getLoginUser()->std::string
     return result;
 }
 
+auto SiKeygen::makeDirectory(const std::string& path)->bool
+{
+    size_t beg = 0;
+    size_t end = 0;
+
+    while ((end = path.find_first_of("\\/", beg)) != std::string::npos)
+    {
+        auto curDir = path.substr(0, end);
+        if (!::PathIsDirectoryA(curDir.c_str()))
+        {
+            if ((!::CreateDirectoryA(curDir.c_str(), nullptr)) && (GetLastError() != ERROR_ALREADY_EXISTS))
+                return false;
+        }
+
+        beg = end + 1;
+    }
+
+    if (!::PathIsDirectoryA(path.c_str()))
+    {
+        if ((!::CreateDirectoryA(path.c_str(), nullptr)) && (GetLastError() != ERROR_ALREADY_EXISTS))
+            return false;
+    }
+
+    return true;
+}
+
 auto SiKeygen::genNocontinuousNumber()->std::string
 {
     const char* number = "0123456789";
@@ -414,4 +441,26 @@ auto SiKeygen::genLicenseFile(const std::string& name, const std::string& compan
     } while (false);
     
     return bRet;
+}
+
+auto SiKeygen::importLicenseFile()->bool
+{
+    CHAR szPath[0x100];
+    auto len = ::GetEnvironmentVariableA("SystemDrive", szPath, sizeof(szPath) - 1);
+    szPath[len] = 0;
+    std::string dir = szPath;
+    dir += "\\ProgramData\\Source Insight\\4.0";
+
+    if (!makeDirectory(dir)) return false;
+
+    len = ::GetCurrentDirectoryA(sizeof(szPath) - 1, szPath);
+    szPath[len] = 0;
+
+    std::string src = szPath;
+    auto dest = dir + "\\si4.lic";
+    src += "\\si4.lic";
+    
+    ::DeleteFileA(dest.c_str());
+
+    return ::MoveFileA(src.c_str(), dest.c_str());
 }
